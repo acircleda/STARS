@@ -131,6 +131,12 @@ set.seed(667)
 knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
 ```
 
+# Abstract
+
+TBD
+
+\newpage
+  
   Higher education institutions play a vital role in society, not only for ensuring a highly educated population but also for solving real-world issues. One such issue is environmental sustainability. Working towards a sustainable society fits within higher education's three-pronged mission of education, research, and public service [@Medlin2008]. That is, in working towards sustainable development goals, colleges and universities can ensure students come away with an understanding of the environment and their impact on it. Post-secondary institutions not only research the natural, technological, and psychological aspects of sustainability but also serve as role models that embody sustainability within their management and work with the community.
   
   Colleges and universities have made numerous commitments to environmental sustainability starting as early as the 1970s (see @Wright2002 for a detailed overview). Among the first commitments was the *Tblisi Declaration* (1978), which promoted higher education institutions’ roles in fostering environmental education. The *Talloires Declaration* (1990) garnered support from institutional administrators, who committed their institutions to various sustainability practices on their campuses (Wright, 2002). A more recent commitment focused on addressing the climate crisis: the American College and University Presidents Climate Commitment, which focused on mitigating greenhouse gasses (GHGs) and achieving carbon neutrality [@Medlin2008].
@@ -345,12 +351,12 @@ ggplot(data = filter(USA, name != "Hawaii" & name != "Alaska"),
 
 The analysis used for this study views the data as hierarchical, with institutions nested within states. Therefore, a hierarchical linear model (i.e., multilevel model) with restricted maximum likelihood estimation was employed. Besides helping delineate between level-1 (local, county-level) effects and level-2 (state) effects, a multilevel model can reduce Type I errors and have less biased parameter estimates, as it takes into account violations of independence caused by nested data [@peugh]. In addition, the multilevel model allows us to simultaneously examine the relationship STARS ratings have with institutional and state-level characteristics.
 
-An initial analysis of scatterplot matrices shows no major violations of linear relationships with the dependent variable, overall STARS score  (Figure \@ref(fig:scatterplotmatrix)). Examination of the correlation matrix indicates all continuous predictors have low to moderate positive, significant correlations to STARS score (Table \@ref(tab:cormatrix)). However, the correlation between vote percentage and agreement with climate change is .90, indicating a very strong association and possible multicollinearity (see Table \@ref(fig:cordemcc)). An inspection of variance inflation factors (VIF) showed VIFs greater than 5, indicating a possible violation of multicollinearity. It was reasoned that because climate change agreement is correlated so closely with Democratic vote percentage, both should not be modeled together. Democratic vote percentage measures political stance, which is more directly tied with local, state, and national politics than agreement with climate change. In addition, the variable itself is an aggregate based on a larger sample than the climate survey. No other variables indicated problems with multicollinearity.
+An initial analysis of scatterplot matrices shows no major violations of linear relationships with the dependent variable, overall STARS score  (Figure \@ref(fig:scatterplotmatrix)). Examination of the correlation matrix indicates all continuous predictors have low to moderate positive, significant correlations to STARS score (Table \@ref(tab:cormatrix)). However, the correlation between vote percentage and agreement with climate change is .90, indicating a very strong association and possible multicollinearity. An inspection of variance inflation factors (VIF) showed VIFs greater than 5, indicating a possible violation of multicollinearity. It was reasoned that because climate change agreement is correlated so closely with Democratic vote percentage, both should not be modeled together. Democratic vote percentage measures political stance, which is more directly tied with local, state, and national politics than agreement with climate change. In addition, the variable itself is an aggregate based on a larger sample than the climate survey. No other variables indicated problems with multicollinearity.
 
 Analyses were conducted using `R` 4.0.2 [@r]. Multilevel models were estimated using the`lmerTest` 3.1.3 [@lmertest] package. `lmerTest` p-values are calculated using Satterthwaite denominator degrees of freedom. Standardized coefficients and confidence intervals were estimated using the `effectsize` 0.3.3 [@effectsize] package.
 
 
-```{r echo=FALSE, message=FALSE, warning=FALSE}
+```{r eval=FALSE, message=FALSE, warning=FALSE, include=FALSE}
 model_vif <- lmerTest::lmer(stars_score ~ 1 + vote_pct_dem + climate_chg_agree + (1 | state),
                           data=data, REML = T)
 performance::check_collinearity(model_vif)
@@ -383,8 +389,8 @@ data %>% ungroup() %>%
 data %>%
   ggplot()+
   geom_point(aes(x=vote_pct_dem, y=climate_chg_agree))+
-  xlab("Average County-Level Percentage of Votes for Democratic Candidate, 2012-2016")+
-  ylab("County-Level Percentage of Climate Change Agreement")
+  xlab("Average County-Level Percentage of\nVotes for Democratic Candidate, 2012-2016")+
+  ylab("County-Level Percentage of \nClimate Change Agreement\n")
 ```
 
 
@@ -507,7 +513,7 @@ sjPlot::plot_model(model_3, type="std",
                    title="Forest Plot of Confidence Intervals (lines) and Standardized Regression Coefficients (dots)")
 ```
 
-  To assess the adequacy of the final model, a series of diagnostic analyses were conducted as suggested by @hoxmultilevel. Based on a scatterplot of standardized residuals plotted against fitted values, the assumption of heteroscedasticity was not violated (\@ref(fig:heterosk)). Histograms and QQ plots (Figure \@ref(fig:reshist)) were used to assess the assumption of normally distributed residuals which did not indicate a violation of normality. A scatterplot \@ref(fig:lin) of standardized residuals against STARS ratings indicated the assumption of linearity of satified. A robustness check of the model was completed by refitting the model using linear regression and then calculating clustered, robust standard errors. Model conclusions did not substantively change.
+  To assess the adequacy of the final model, a series of diagnostic analyses were conducted as suggested by @hoxmultilevel (see the Appendix for diagnostic visuals). These tests indicated no homoscedasticity was not present, residuals were normally distributed, and the assumption of linearity was satisfied. A robustness check of the model was completed by refitting the model using linear regression and then calculating clustered, robust standard errors. Model conclusions did not substantively change.
   
 ```{r warning=FALSE, include=FALSE}
 model_lm <- lm(stars_score ~ 1 + vote_pct_dem + 
@@ -526,83 +532,6 @@ lmtest::coeftest(model_lm, vcov=clustered)
 
 
 
-```{r heterosk, fig.cap="Residuals Plotted Against Fitted Values", message=FALSE, warning=FALSE, echo=FALSE}
-res_model_0 <- resid(model_0, type="pearson", scaled=T) 
-res_model_0_lv2 <- ranef(model_0, condVar=T) %>%
-  as.data.frame() %>%
-  mutate(stand = condval/condsd) %>%
-  pull(stand)
-pred_model_0 <- predict(model_0)
-
-res_model_3 <- resid(model_3, type="pearson", scaled=T) 
-res_model_3_lv2 <- ranef(model_3, condVar=T) %>%
-  as.data.frame() %>%
-  mutate(stand = condval/condsd) %>%
-  pull
-pred_model_3 <- predict(model_3)
-
-#plot(model_0)
-
-residuals <- cbind(res=res_model_0, fit=pred_model_0) %>%
-  as.data.frame() %>%
-  mutate(model = "Model 0") %>%
-  rownames_to_column("id") %>%
-  rbind(cbind(res=res_model_3, fit=pred_model_3) %>%
-  as.data.frame() %>%
-  mutate(model = "Model 3") %>%
-  rownames_to_column("id"))
-
-residuals %>%
-  ggplot(aes(y=fit, x=res))+
-  geom_point()+
-  geom_hline(yintercept = 0)+
-  #geom_smooth()+
-  facet_wrap(~model, scales="free")+
-  theme_bw()
-```
-
-```{r reshist, fig.cap="Histogram of Residuals", message=FALSE, warning=FALSE, echo=FALSE}
-residuals %>%
-  ggplot(aes(x=res))+
-  geom_histogram()+
-  facet_wrap(~model, scales="free")+
-  theme_bw()
-
-```
-```{r qq, fig.cap="QQ-Plot of Residuals", message=FALSE, warning=FALSE, echo=FALSE}
-residuals %>%
-  ggplot(aes(sample=res))+
-  geom_qq()+
-  geom_qq_line()+
-  facet_wrap(~model, scales="free")+
-  theme_bw()
-```
-
-```{r lin, echo=FALSE, fig.cap="Linearity between Residuals and Outcome", message=TRUE, warning=FALSE}
-library(patchwork)
-(cbind(data, res = res_model_0) %>%
-  ggplot(aes(y=stars_score, x=res))+
-  geom_point()+
-  geom_smooth()+
-  ggtitle("Model 0"))+
-  cbind(data, res = res_model_3) %>%
-  ggplot(aes(y=stars_score, x=res))+
-  geom_point()+
-  geom_smooth()+
-  ggtitle("Model 3")
-```
-
-```{r m3lin, echo=FALSE}
-data %>%
-  ungroup() %>%
-cbind(res_m0 = res_model_0, res_m3 = res_model_3) %>%
-  select(stars_score, vote_pct_dem, revenue, out_of_state, rps_target, state_leg_pct_dem, res_m0, res_m3) %>%
-  pivot_longer(stars_score:state_leg_pct_dem) %>%
-  ggplot(aes(x=value, y=res_m3))+
-  geom_point()+
-  geom_smooth(method="loess")+
-  facet_wrap(~name, scales="free")
-```
 
 # Discussion
 
@@ -671,3 +600,94 @@ data %>%
 
 <div id="refs" custom-style="Bibliography"></div>
 \endgroup
+
+# Appendix
+
+## Modwl Diagnostics
+
+  To assess the adequacy of the final model, a series of diagnostic analyses were conducted as suggested by @hoxmultilevel (see the Appendix for diagnostic visuals). Based on a scatterplot of standardized residuals plotted against fitted values, the assumption of heteroscedasticity was not violated. 
+  
+```{r heterosk, fig.cap="Residuals Plotted Against Fitted Values", message=FALSE, warning=FALSE, echo=FALSE}
+res_model_0 <- resid(model_0, type="pearson", scaled=T) 
+res_model_0_lv2 <- ranef(model_0, condVar=T) %>%
+  as.data.frame() %>%
+  mutate(stand = condval/condsd) %>%
+  pull(stand)
+pred_model_0 <- predict(model_0)
+
+res_model_3 <- resid(model_3, type="pearson", scaled=T) 
+res_model_3_lv2 <- ranef(model_3, condVar=T) %>%
+  as.data.frame() %>%
+  mutate(stand = condval/condsd) %>%
+  pull
+pred_model_3 <- predict(model_3)
+
+#plot(model_0)
+
+residuals <- cbind(res=res_model_0, fit=pred_model_0) %>%
+  as.data.frame() %>%
+  mutate(model = "Model 0") %>%
+  rownames_to_column("id") %>%
+  rbind(cbind(res=res_model_3, fit=pred_model_3) %>%
+  as.data.frame() %>%
+  mutate(model = "Model 3") %>%
+  rownames_to_column("id"))
+
+residuals %>%
+  ggplot(aes(y=fit, x=res))+
+  geom_point()+
+  #geom_hline(yintercept = 0)+
+  geom_smooth(se=F)+
+  facet_wrap(~model, scales="free")+
+  theme_bw()
+```
+
+Histograms and QQ plots were used to assess the assumption of normally distributed residuals and did not indicate a violation of normality. 
+
+```{r reshist, fig.cap="Histogram of Residuals", message=FALSE, warning=FALSE, echo=FALSE}
+residuals %>%
+  ggplot(aes(x=res))+
+  geom_histogram()+
+  facet_wrap(~model, scales="free")+
+  theme_bw()
+
+```
+
+
+
+```{r qq, fig.cap="QQ-Plot of Residuals", message=FALSE, warning=FALSE, echo=FALSE}
+residuals %>%
+  ggplot(aes(sample=res))+
+  geom_qq()+
+  geom_qq_line()+
+  facet_wrap(~model, scales="free")+
+  theme_bw()
+```
+
+A scatterplot of standardized residuals against STARS ratings indicated the assumption of linearity was satisfied. 
+
+```{r lin, echo=FALSE, fig.cap="Linearity between Residuals and Outcome", message=TRUE, warning=FALSE}
+library(patchwork)
+(cbind(data, res = res_model_0) %>%
+  ggplot(aes(y=stars_score, x=res))+
+  geom_point()+
+  geom_smooth()+
+  ggtitle("Model 0"))+
+  cbind(data, res = res_model_3) %>%
+  ggplot(aes(y=stars_score, x=res))+
+  geom_point()+
+  geom_smooth()+
+  ggtitle("Model 3")
+```
+
+<!-- ```{r m3lin, echo=FALSE} -->
+<!-- data %>% -->
+<!--   ungroup() %>% -->
+<!-- cbind(res_m0 = res_model_0, res_m3 = res_model_3) %>% -->
+<!--   select(stars_score, vote_pct_dem, revenue, out_of_state, rps_target, state_leg_pct_dem, res_m0, res_m3) %>% -->
+<!--   pivot_longer(stars_score:state_leg_pct_dem) %>% -->
+<!--   ggplot(aes(x=value, y=res_m3))+ -->
+<!--   geom_point()+ -->
+<!--   geom_smooth(method="loess")+ -->
+<!--   facet_wrap(~name, scales="free") -->
+<!-- ``` -->
